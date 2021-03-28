@@ -4,7 +4,7 @@ import threading
 import timestamp
 import bridge
 
-VERSION = '0.2.1'
+VERSION = '0.3.1'
 
 print(f"Version: {VERSION}")
 print("[STARTING] Attempting to start server...")
@@ -36,6 +36,8 @@ class Server:
         client = self.get_client(address)
 
         while client.connected:
+            update = True
+
             try:
                 header, body = bridge.receive_message(client_socket).split("|")
                 if header == "SEND":
@@ -51,11 +53,17 @@ class Server:
                 elif header == "USERNAME":
                     print(f"[{timestamp.get()}NAME CHANGE] {address[0]} -> {body}")
                     client.username = body
+                elif header == "RETRIEVE":
+                    update = False
+                    if body == "USERNAME":
+                        bridge.send_message(client_socket, client.username)
                 elif header == "ERROR":
                     client.messages.append((header, body))
-                response = client.get_update()
-                if response:
-                    bridge.send_message(client_socket, response)
+
+                if update:
+                    response = client.get_update()
+                    if response:
+                        bridge.send_message(client_socket, response)
             except ConnectionResetError:
                 for external_client in self.clients:
                     if external_client != client:
