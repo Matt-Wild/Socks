@@ -12,17 +12,28 @@ server.connect((server_ip, 9696))
 
 
 def receive_loop():
-    while True:
-        received = bridge.receive_message(server)
-        if received:
-            chat_log.insert(tk.END, received + "\n")
+    connected = True
+    while connected:
+        try:
+            received = bridge.receive_message(server)
+            if received:
+                chat_log.insert(tk.END, received + "\n")
+                chat_log.see('end')
+        except ConnectionResetError:
+            connected = False
+            chat_log.delete('0.0', tk.END)
+            chat_log.insert(tk.END, "Server connection lost...")
 
 
 def update_loop():
-    while True:
-        bridge.send_message(server, "UPDATE|")
+    connected = True
+    while connected:
+        try:
+            bridge.send_message(server, "UPDATE|")
 
-        time.sleep(0.1)
+            time.sleep(0.1)
+        except ConnectionResetError:
+            connected = False
 
 
 def from_rgb(rgb):
@@ -69,8 +80,13 @@ message_entry.bind('<Return>', send_message)
 
 tk.Button(window, text="SEND", width=6, height=1, command=send_message).grid(row=3, column=1, sticky=tk.N, padx=(0, 10), pady=(0, 10))
 
+tk.Label(window, text="Chat Log:", bg=bg_colour, fg="white", font="none 10").grid(row=0, column=2, sticky=tk.W)
+
 chat_log = tk.Text(window, width=70, height=50, wrap=tk.WORD, background=ui_colour, fg=uif_colour)
-chat_log.grid(row=1, column=2, sticky=tk.W, padx=(0, 10), pady=(0, 10), rowspan=3)
+chat_log.grid(row=1, column=2, sticky=tk.W, pady=(0, 10), rowspan=3)
+chat_scrollbar = tk.Scrollbar(window, command=chat_log.yview)
+chat_scrollbar.grid(row=1, column=3, rowspan=3, padx=(0, 10), pady=(0, 10), sticky='nsew')
+chat_log.config(yscrollcommand=chat_scrollbar.set)
 
 # Getting welcome response
 welcome_response = bridge.receive_message(server)

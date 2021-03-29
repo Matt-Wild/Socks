@@ -4,12 +4,17 @@ import threading
 import timestamp
 import bridge
 
-VERSION = '0.3.1'
+debug = False
+
+VERSION = '0.4.4'
 
 print(f"Version: {VERSION}")
 print("[STARTING] Attempting to start server...")
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(('192.168.1.82', 9696))
+if debug:
+    s.bind(('127.0.0.1', 9696))
+else:
+    s.bind(('192.168.1.82', 9696))
 s.listen(128)
 
 
@@ -39,7 +44,10 @@ class Server:
             update = True
 
             try:
-                header, body = bridge.receive_message(client_socket).split("|")
+                received = bridge.receive_message(client_socket).split("|")
+                header = received[0]
+                received.pop(0)
+                body = ''.join(received)
                 if header == "SEND":
                     message = "\n" + body
                     sender = client.username
