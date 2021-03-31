@@ -11,6 +11,12 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.connect((server_ip, 9696))
 
 
+class ClientData:
+
+    def __init__(self):
+        self.nickname = None
+
+
 def receive_loop():
     connected = True
     while connected:
@@ -36,8 +42,22 @@ def update_loop():
             connected = False
 
 
+def gui_update_loop():
+    while True:
+        update_nickname_colour()
+
+        time.sleep(0.1)
+
+
 def from_rgb(rgb):
     return "#%02x%02x%02x" % rgb
+
+
+def update_nickname_colour():
+    if nickname_entry.get() == CD.nickname:
+        nickname_entry.configure(fg=uif_dark)
+    else:
+        nickname_entry.configure(fg=uif_colour)
 
 
 def send_message(event=None):
@@ -49,13 +69,17 @@ def send_message(event=None):
 
 def send_nickname(event=None):
     new_nickname = nickname_entry.get()
-    if nickname:
+    if CD.nickname:
         bridge.send_message(server, "USERNAME|" + new_nickname)
+        CD.nickname = new_nickname
 
+
+CD = ClientData()
 
 bg_colour = from_rgb((20, 20, 20))
 ui_colour = from_rgb((40, 40, 40))
 uif_colour = from_rgb((200, 200, 200))
+uif_dark = from_rgb((100, 100, 100))
 
 window = tk.Tk()
 window.title("Socks")
@@ -94,13 +118,16 @@ chat_log.insert(tk.END, welcome_response + "\n")
 
 # Getting nickname
 bridge.send_message(server, "RETRIEVE|USERNAME")
-nickname = bridge.receive_message(server)
-nickname_entry.insert(tk.END, nickname)
+CD.nickname = bridge.receive_message(server)
+nickname_entry.insert(tk.END, CD.nickname)
 
 receive_thread = threading.Thread(target=receive_loop)
 receive_thread.start()
 
 update_thread = threading.Thread(target=update_loop)
 update_thread.start()
+
+gui_update_thread = threading.Thread(target=gui_update_loop)
+gui_update_thread.start()
 
 window.mainloop()
