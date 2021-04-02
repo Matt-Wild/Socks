@@ -23,8 +23,14 @@ def receive_loop():
         try:
             received = bridge.receive_message(server)
             if received:
-                chat_log.insert(tk.END, received + "\n")
-                chat_log.see('end')
+                received = received.split("|")
+                if received[0] == "MSG":
+                    received = "".join(received[1:])
+                    chat_log.insert(tk.END, received + "\n")
+                    chat_log.see('end')
+                elif received[0] == "CONNS":
+                    connections_log.delete('0.0', tk.END)
+                    connections_log.insert(tk.END, received[1])
         except ConnectionResetError:
             connected = False
             chat_log.delete('0.0', tk.END)
@@ -85,10 +91,6 @@ window = tk.Tk()
 window.title("Socks")
 window.iconbitmap('icon.ico')
 window.configure(background=bg_colour)
-window.grid_rowconfigure(1, weight=0)
-window.grid_rowconfigure(2, weight=0)
-window.grid_rowconfigure(3, weight=0)
-window.grid_rowconfigure(3, weight=1)
 
 tk.Label(window, text="Nickname:", bg=bg_colour, fg="white", font="none 10").grid(row=0, column=0, sticky=tk.W, padx=(10, 0), pady=(5, 0))
 
@@ -99,18 +101,30 @@ nickname_entry.bind('<Return>', send_nickname)
 tk.Label(window, text="Message:", bg=bg_colour, fg="white", font="none 10").grid(row=2, column=0, sticky=tk.W, padx=(10, 0))
 
 message_entry = tk.Entry(window, width=30, bg=ui_colour, fg=uif_colour, font="none 16")
-message_entry.grid(row=3, column=0, sticky=tk.N, padx=(10, 5), pady=(0, 10))
+message_entry.grid(row=3, column=0, sticky=tk.NW, padx=(10, 5), pady=(0, 10))
 message_entry.bind('<Return>', send_message)
 
-tk.Button(window, text="SEND", width=6, height=1, command=send_message).grid(row=3, column=1, sticky=tk.N, padx=(0, 10), pady=(0, 10))
+tk.Button(window, text="SEND", width=6, height=1, command=send_message).grid(row=3, column=1, sticky=tk.NW, padx=(0, 10), pady=(0, 10))
+
+tk.Label(window, text="Connections:", bg=bg_colour, fg="white", font="none 10").grid(row=4, column=0, sticky=tk.W, padx=(10, 0))
+
+connections_log = tk.Text(window, width=45, wrap=tk.WORD, background=ui_colour, fg=uif_colour)
+connections_log.grid(row=5, column=0, sticky=tk.NW, padx=(10, 5))
 
 tk.Label(window, text="Chat Log:", bg=bg_colour, fg="white", font="none 10").grid(row=0, column=2, sticky=tk.W)
 
 chat_log = tk.Text(window, width=70, height=50, wrap=tk.WORD, background=ui_colour, fg=uif_colour)
-chat_log.grid(row=1, column=2, sticky=tk.W, pady=(0, 10), rowspan=3)
+chat_log.grid(row=1, column=2, sticky=tk.W, pady=(0, 10), rowspan=10)
 chat_scrollbar = tk.Scrollbar(window, command=chat_log.yview)
-chat_scrollbar.grid(row=1, column=3, rowspan=3, padx=(0, 10), pady=(0, 10), sticky='nsew')
+chat_scrollbar.grid(row=1, column=3, rowspan=10, padx=(0, 10), pady=(0, 10), sticky='nsew')
 chat_log.config(yscrollcommand=chat_scrollbar.set)
+
+window.grid_rowconfigure(0, weight=0)
+window.grid_rowconfigure(1, weight=0)
+window.grid_rowconfigure(2, weight=0)
+window.grid_rowconfigure(3, weight=0)
+window.grid_rowconfigure(4, weight=0)
+window.grid_rowconfigure(5, weight=1)
 
 # Getting welcome response
 welcome_response = bridge.receive_message(server)

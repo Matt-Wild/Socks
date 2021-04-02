@@ -10,12 +10,14 @@ def send_message(socket, message):
 
 
 def receive_message(socket):
-    message_length = socket.recv(HEADER).decode(FORMAT)
+    message_length = socket.recv(HEADER)
+    message_length = message_length.decode(FORMAT)
     if message_length:
         try:
             message_length = int(message_length)
             try:
-                message = socket.recv(message_length).decode(FORMAT)
+                message = socket.recv(message_length)
+                message = message.decode(FORMAT)
             except OverflowError:
                 return "ERROR|ERROR SENDING MESSAGE... RETRYING"
         except ValueError:

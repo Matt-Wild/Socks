@@ -6,7 +6,7 @@ import bridge
 
 debug = True
 
-VERSION = '0.4.5'
+VERSION = '0.5.1'
 
 print(f"Version: {VERSION}")
 print("[STARTING] Attempting to start server...")
@@ -61,6 +61,8 @@ class Server:
                 elif header == "USERNAME":
                     print(f"[{timestamp.get()}NAME CHANGE] {address[0]} -> {body}")
                     client.username = body
+                    for current_client in self.clients:
+                        current_client.conns_update = True
                 elif header == "RETRIEVE":
                     update = False
                     if body == "USERNAME":
@@ -75,6 +77,7 @@ class Server:
             except ConnectionResetError:
                 for external_client in self.clients:
                     if external_client != client:
+                        external_client.conns_update = True
                         external_client.disconnections.append(client.username)
 
                 print(f"[{timestamp.get()}DISCONNECTED] {address[0]}")
@@ -83,18 +86,21 @@ class Server:
         client_socket.close()
 
     def add_client(self, client_socket, address):
-        for client in self.clients:
-            client.new_connections.append(address[0])
-
         print(f"[{timestamp.get()}NEW CONNECTION] {address[0]}")
         bridge.send_message(client_socket, f"Server version: {VERSION}\nWelcome {address[0]}, connection successfully "
                                            f"established!")
-        self.clients.append(Client(address[0]))
+        self.clients.append(Client(self.clients, address[0]))
+
+        for client in self.clients:
+            client.conns_update = True
+            if client.username != address[0]:
+                client.new_connections.append(address[0])
 
     def client_returned(self, client_socket, address):
         client = self.get_client(address)
 
         for external_client in self.clients:
+            client.conns_update = True
             if external_client != client:
                 external_client.returned_connections.append(client.username)
 
@@ -117,11 +123,15 @@ class Server:
 
 class Client:
 
-    def __init__(self, address):
+    def __init__(self, clients, address):
+        self.clients = clients
+
         self.address = address
         self.username = address
 
         self.connected = True
+
+        self.conns_update = False
 
         self.new_connections = []
         self.returned_connections = []
@@ -132,23 +142,31 @@ class Client:
         response = ""
 
         if len(self.new_connections) > 0:   # New user joined
-            response = f"[{timestamp.get()}JOINED] {self.new_connections[0]}"
+            response = f"MSG|[{timestamp.get()}JOINED] {self.new_connections[0]}"
             self.new_connections.pop(0)
             return response
 
         if len(self.returned_connections) > 0:   # User returned
-            response = f"[{timestamp.get()}RETURNED] {self.returned_connections[0]}"
+            response = f"MSG|[{timestamp.get()}RETURNED] {self.returned_connections[0]}"
             self.returned_connections.pop(0)
             return response
 
         if len(self.disconnections) > 0:   # User discord
-            response = f"[{timestamp.get()}DISCONNECTED] {self.disconnections[0]}"
+            response = f"MSG|[{timestamp.get()}DISCONNECTED] {self.disconnections[0]}"
             self.disconnections.pop(0)
             return response
 
         if len(self.messages) > 0:  # Message received
-            response = f"[{timestamp.get()}{self.messages[0][0]}] {self.messages[0][1]}"
+            response = f"MSG|[{timestamp.get()}{self.messages[0][0]}] {self.messages[0][1]}"
             self.messages.pop(0)
+            return response
+
+        if self.conns_update:
+            response = "CONNS|"
+            for client in self.clients:
+                if client.connected:
+                    response += f" - {client.username}\n"
+            self.conns_update = False
             return response
 
         return response     # No update required
