@@ -75,7 +75,7 @@ def send_message(event=None):
 
 def send_nickname(event=None):
     new_nickname = nickname_entry.get()
-    if CD.nickname:
+    if new_nickname:
         bridge.send_message(server, "USERNAME|" + new_nickname)
         CD.nickname = new_nickname
 
@@ -114,9 +114,9 @@ connections_log.grid(row=5, column=0, sticky=tk.NW, padx=(10, 5))
 tk.Label(window, text="Chat Log:", bg=bg_colour, fg="white", font="none 10").grid(row=0, column=2, sticky=tk.W)
 
 chat_log = tk.Text(window, width=70, height=50, wrap=tk.WORD, background=ui_colour, fg=uif_colour)
-chat_log.grid(row=1, column=2, sticky=tk.W, pady=(0, 10), rowspan=10)
+chat_log.grid(row=1, column=2, sticky=tk.NW, pady=(0, 10), rowspan=5)
 chat_scrollbar = tk.Scrollbar(window, command=chat_log.yview)
-chat_scrollbar.grid(row=1, column=3, rowspan=10, padx=(0, 10), pady=(0, 10), sticky='nsew')
+chat_scrollbar.grid(row=1, column=3, rowspan=5, padx=(0, 10), pady=(0, 10), sticky='nsew')
 chat_log.config(yscrollcommand=chat_scrollbar.set)
 
 window.grid_rowconfigure(0, weight=0)

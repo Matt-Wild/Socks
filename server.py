@@ -4,9 +4,9 @@ import threading
 import timestamp
 import bridge
 
-debug = True
+debug = False
 
-VERSION = '0.5.1'
+VERSION = '0.5.6'
 
 print(f"Version: {VERSION}")
 print("[STARTING] Attempting to start server...")
@@ -15,7 +15,7 @@ if debug:
     s.bind(('127.0.0.1', 9696))
 else:
     s.bind(('192.168.1.82', 9696))
-s.listen(128)
+s.listen(1024)
 
 
 class Server:
@@ -100,7 +100,7 @@ class Server:
         client = self.get_client(address)
 
         for external_client in self.clients:
-            client.conns_update = True
+            external_client.conns_update = True
             if external_client != client:
                 external_client.returned_connections.append(client.username)
 
@@ -165,7 +165,10 @@ class Client:
             response = "CONNS|"
             for client in self.clients:
                 if client.connected:
-                    response += f" - {client.username}\n"
+                    response += f" - {client.username}"
+                    if client == self:
+                        response += " (You)"
+                    response += "\n"
             self.conns_update = False
             return response
 
