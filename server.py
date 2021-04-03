@@ -6,7 +6,7 @@ import bridge
 
 debug = False
 
-VERSION = '0.5.6'
+VERSION = '0.6.0'
 
 print(f"Version: {VERSION}")
 print("[STARTING] Attempting to start server...")
