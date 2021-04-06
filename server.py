@@ -4,9 +4,9 @@ import threading
 import timestamp
 import bridge
 
-debug = False
+debug = True
 
-VERSION = '0.6.0'
+VERSION = '0.6.1'
 
 print(f"Version: {VERSION}")
 print("[STARTING] Attempting to start server...")

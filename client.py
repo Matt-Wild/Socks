@@ -26,15 +26,21 @@ def receive_loop():
                 received = received.split("|")
                 if received[0] == "MSG":
                     received = "".join(received[1:])
+                    chat_log.configure(state="normal")
                     chat_log.insert(tk.END, received + "\n")
                     chat_log.see('end')
+                    chat_log.configure(state="disabled")
                 elif received[0] == "CONNS":
+                    connections_log.configure(state="normal")
                     connections_log.delete('0.0', tk.END)
                     connections_log.insert(tk.END, received[1])
+                    connections_log.configure(state="disabled")
         except ConnectionResetError:
             connected = False
+            chat_log.configure(state="normal")
             chat_log.delete('0.0', tk.END)
             chat_log.insert(tk.END, "Server connection lost...")
+            chat_log.configure(state="disabled")
 
 
 def update_loop():
@@ -108,7 +114,7 @@ tk.Button(window, text="SEND", width=6, height=1, command=send_message).grid(row
 
 tk.Label(window, text="Connections:", bg=bg_colour, fg="white", font="none 10").grid(row=4, column=0, sticky=tk.W, padx=(10, 0))
 
-connections_log = tk.Text(window, width=45, wrap=tk.WORD, background=ui_colour, fg=uif_colour)
+connections_log = tk.Text(window, width=45, wrap=tk.WORD, background=ui_colour, fg=uif_colour, state="disabled")
 connections_log.grid(row=5, column=0, sticky=tk.NW, padx=(10, 5))
 
 tk.Label(window, text="Chat Log:", bg=bg_colour, fg="white", font="none 10").grid(row=0, column=2, sticky=tk.W)
@@ -134,6 +140,8 @@ chat_log.insert(tk.END, welcome_response + "\n")
 bridge.send_message(server, "RETRIEVE|USERNAME")
 CD.nickname = bridge.receive_message(server)
 nickname_entry.insert(tk.END, CD.nickname)
+
+chat_log.configure(state="disabled")
 
 receive_thread = threading.Thread(target=receive_loop)
 receive_thread.start()
